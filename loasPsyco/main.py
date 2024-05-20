@@ -54,7 +54,6 @@ def psyco_loader(event, context):
             bigquery.SchemaField('dislike_hw', 'NUMERIC'),
             bigquery.SchemaField('prefer', 'STRING'),
             bigquery.SchemaField('certaindays_hw', 'STRING'),
-            bigquery.SchemaField('travel_work', 'STRING'),
             bigquery.SchemaField('loaded', 'BOOLEAN', mode='REQUIRED')
         ],
         skip_leading_rows=1,
@@ -65,12 +64,15 @@ def psyco_loader(event, context):
 
     # Convert CSV content to a list of dictionaries and add UUID and loaded fields
     csv_reader = csv.DictReader(io.StringIO(file_content))
-    fieldnames = csv_reader.fieldnames + ['ID', 'loaded']  # Update fieldnames to include new columns
+    original_fieldnames = csv_reader.fieldnames
+    fieldnames = ['ID'] + original_fieldnames + ['loaded']  # Ensure ID at the beginning and loaded at the end
+
     data_with_uuid_and_loaded = []
     for row in csv_reader:
-        row['ID'] = generate_uuid()
-        row['loaded'] = "false"
-        data_with_uuid_and_loaded.append({k: v for k, v in row.items() if k in fieldnames})
+        new_row = {'ID': generate_uuid()}
+        new_row.update(row)
+        new_row['loaded'] = False
+        data_with_uuid_and_loaded.append(new_row)
 
     # Convert the list of dictionaries back to a CSV string
     csv_output = io.StringIO()
@@ -78,13 +80,13 @@ def psyco_loader(event, context):
     csv_writer.writeheader()
     csv_writer.writerows(data_with_uuid_and_loaded)
     csv_output.seek(0)  # Reset the StringIO object for reading
-    
-    print("CSV_OUTPUT: ",csv_output.getvalue())
-    print("data_with_uuid_and_loaded: ", data_with_uuid_and_loaded)
-    print("csv_writer: ", csv_writer)
+
+    # Print the final CSV content for debugging
+    print("Final CSV content:\n", csv_output.getvalue())
+    csv_output.seek(0)  # Reset to the beginning of the StringIO object
 
     load_job = bigquery_client.load_table_from_file(
-        io.StringIO(csv_output.getvalue()),
+        csv_output,
         table_ref,
         job_config=job_config
     )
