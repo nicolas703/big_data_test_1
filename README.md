@@ -17,4 +17,6 @@
 4. schedulada
     - https://console.cloud.google.com/bigquery/scheduled-queries?project=powerful-star-421901
 
+5. bucket
+    - https://console.cloud.google.com/storage/browser/pokemon-duoc;tab=objects?forceOnBucketsSortingFiltering=true&project=powerful-star-421901&prefix=&forceOnObjectsSortingFiltering=false
 
